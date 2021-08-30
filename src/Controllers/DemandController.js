@@ -72,9 +72,17 @@ const demandGet = async (req, res) => {
 
 const demandsCategoriesStatistic = async (req, res) => {
   const {
-    idSector, idCategory, initialDate, finalDate,
+    isDemandActive, idSector, idCategory, initialDate, finalDate,
   } = req.query;
-
+  
+  let isActive;
+  if (isDemandActive === 'true') {
+    isActive = true;
+  } else if (isDemandActive === 'false') {
+    isActive = false;
+  } else {
+    isActive = {$exists: true};
+  }
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
@@ -102,7 +110,7 @@ const demandsCategoriesStatistic = async (req, res) => {
         const categoryId = mongoose.Types.ObjectId(idCategory);
         aggregatorOpts.unshift({
           $match: {
-            open: true,
+            open: isActive,
             sectorID: idSector,
             categoryID: categoryId,
             createdAt: {
@@ -114,7 +122,7 @@ const demandsCategoriesStatistic = async (req, res) => {
       } else {
         aggregatorOpts.unshift({
           $match: {
-            open: true,
+            open: isActive,
             sectorID: idSector,
             createdAt: {
               $gte: new Date(initialDate),
@@ -132,7 +140,7 @@ const demandsCategoriesStatistic = async (req, res) => {
       const categoryId = mongoose.Types.ObjectId(idCategory);
       aggregatorOpts.unshift({
         $match: {
-          open: true,
+          open: isActive,
           categoryID: categoryId,
           createdAt: {
             $gte: new Date(initialDate),
@@ -143,7 +151,7 @@ const demandsCategoriesStatistic = async (req, res) => {
     } else {
       aggregatorOpts.unshift({
         $match: {
-          open: true,
+          open: isActive,
           createdAt: {
             $gte: new Date(initialDate),
             $lte: new Date(completeFinalDate),
@@ -164,8 +172,16 @@ const demandsCategoriesStatistic = async (req, res) => {
 };
 
 const demandsSectorsStatistic = async (req, res) => {
-  const { idCategory, initialDate, finalDate } = req.query;
-
+  const { isDemandActive, idCategory, initialDate, finalDate } = req.query;
+  
+  let isActive;
+  if (isDemandActive === 'true') {
+    isActive = true;
+  } else if (isDemandActive === 'false') {
+    isActive = false;
+  } else {
+    isActive = {$exists: true};
+  }
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
@@ -182,7 +198,7 @@ const demandsSectorsStatistic = async (req, res) => {
       const objectID = mongoose.Types.ObjectId(idCategory);
       aggregatorOpts.unshift({
         $match: {
-          open: true,
+          open: isActive,
           categoryID: objectID,
           createdAt: {
             $gte: new Date(initialDate),
@@ -196,7 +212,7 @@ const demandsSectorsStatistic = async (req, res) => {
   } else {
     aggregatorOpts.unshift({
       $match: {
-        open: true,
+        open: isActive,
         createdAt: {
           $gte: new Date(initialDate),
           $lte: new Date(completeFinalDate),
@@ -207,6 +223,7 @@ const demandsSectorsStatistic = async (req, res) => {
 
   try {
     const statistics = await Demand.aggregate(aggregatorOpts).exec();
+    console.log(statistics);
     return res.json(statistics);
   } catch (err) {
     return res.status(400).json({ err: 'failed to generate statistics' });
