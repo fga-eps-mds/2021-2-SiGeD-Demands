@@ -3,12 +3,13 @@ const moment = require("moment-timezone");
 const Demand = require("../Models/DemandSchema");
 const Category = require("../Models/CategorySchema");
 const validation = require("../Utils/validate");
-const { createDemandEmail } = require("../Utils/mailFormatter");
+const { createDemandEmail } = require("../Utils/mailer");
 
+const { getClients } = require("../Services/Axios/clientService");
 const {
-  getClients,
-  sendEmailToClient,
-} = require("../Services/Axios/clientService");
+  notifyDemandCreated,
+  scheduleDemandComingAlert,
+} = require("../Utils/mailer");
 const { getUser, sendEmail } = require("../Services/Axios/userService");
 const verifyChanges = require("../Utils/verifyChanges");
 
@@ -282,9 +283,9 @@ const demandCreate = async (req, res) => {
       updatedAt: date,
     });
 
-    const { subject, text } = createDemandEmail(newDemand);
-    var response = await sendEmailToClient(clientID, subject, text, token);
-    console.log(response);
+    await notifyDemandCreated(clientID, newDemand, token);
+    await scheduleDemandComingAlert(clientID, newDemand, token);
+
     return res.json(newDemand);
   } catch (err) {
     console.log(err);
