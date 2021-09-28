@@ -6,7 +6,7 @@ const CategoryController = require('./Controllers/CategoryController');
 const DemandController = require('./Controllers/DemandController');
 const AlertController = require('./Controllers/AlertController');
 const multer = require('multer');
-const multerConfig =require('./Utils/multer');
+const multerConfig = require('./Utils/multer');
 
 routes.get('/category', verifyJWT, CategoryController.categoryGet);
 routes.get('/category/:id', verifyJWT, CategoryController.categoryId);
@@ -25,7 +25,8 @@ routes.get('/clientsNames', verifyJWT, DemandController.demandGetWithClientsName
 routes.put('/demand/create-demand-update/:id', verifyJWT, DemandController.createDemandUpdate);
 routes.put('/demand/update-demand-update/:id', verifyJWT, DemandController.updateDemandUpdate);
 routes.put('/demand/delete-demand-update/:id', verifyJWT, DemandController.deleteDemandUpdate);
-routes.post('/demand/upload-file/:id', verifyJWT, multer(multerConfig).single("file"), DemandController.uploadFile);
+routes.post('/demand/upload-file/:id', verifyJWT, multer(multerConfig).single('file'), DemandController.uploadFile);
+routes.get('/demand/file/:idFile', DemandController.getFile);
 routes.get('/demand/history/:id', verifyJWT, DemandController.history);
 routes.get('/statistic/category', verifyJWT, DemandController.demandsCategoriesStatistic);
 routes.get('/statistic/sector', verifyJWT, DemandController.demandsSectorsStatistic);
