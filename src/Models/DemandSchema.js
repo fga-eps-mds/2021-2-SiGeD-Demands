@@ -89,6 +89,9 @@ const DemandSchema = new mongoose.Schema({
       type: String,
       require: true,
     },
+    fileID: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }],
+    },
     description: {
       type: String,
       require: true,
