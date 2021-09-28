@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
+const fs = require('fs');
+const pathR = require('path');
 const Demand = require('../Models/DemandSchema');
 const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
@@ -535,33 +537,72 @@ const newestFourDemandsGet = async (req, res) => {
   return res.status(200).json(demands);
 };
 
-const uploadFile = async (req, res) => {
-  
-  const { id } = req.params;
-
-  const name = req.file.originalname;
-  const size = req.file.size;
-  const path = `./files/uploads/${req.file.filename}`;
-
-
+const getFile = async (req, res) => {
+  const { idFile } = req.params;
   try {
+    const fileObject = await File.findOne({ _id: idFile });
+    const pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+    const file = fs.createReadStream(pathFile);
+    res.contentType('application/pdf');
+    return file.pipe(res);
+  } catch (err) {
+    return res.status(400).json({ err: 'Failed to get file.' });
+  }
+};
 
+const uploadFile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      userName,
+      userSector,
+      userId,
+      description,
+      important,
+      visibility,
+    } = req.body;
+    const name = req.file.originalname;
+    const { size } = req.file;
+    const path = req.file.filename;
     const newFile = await File.create({
-      name: name,
-      path: path,
-      size: size,
+      name,
+      path,
+      size,
       demandId: id,
       createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
       updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
     });
 
+    const validFields = validation.validateDemandUpdate(
+      userName, description, visibility, userSector, userId, important,
+    );
+
+    if (validFields.length) {
+      return res.status(400).json({ status: validFields });
+    }
+
+    const demandFound = await Demand.findOne({ _id: id });
+
+    demandFound.updateList = demandFound.updateList.push({
+      userName,
+      userSector,
+      userId,
+      fileID: newFile._id,
+      description,
+      visibility,
+      important,
+      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+    });
+
+    await Demand.findOneAndUpdate({ _id: id }, {
+      updateList: demandFound.updateList,
+    }, { new: true }, (user) => user);
     return res.json(newFile);
   } catch {
-      console.log(err)
-      return res.status(400).json({ err: 'Failed to save file.' });
+    return res.status(400).json({ err: 'Failed to save file.' });
   }
-
-}
+};
 
 module.exports = {
   demandGet,
@@ -580,4 +621,5 @@ module.exports = {
   history,
   newestFourDemandsGet,
   uploadFile,
+  getFile,
 };
