@@ -5,6 +5,7 @@ const routes = express.Router();
 const CategoryController = require('./Controllers/CategoryController');
 const DemandController = require('./Controllers/DemandController');
 const AlertController = require('./Controllers/AlertController');
+// eslint-disable-next-line import/order
 const multer = require('multer');
 const multerConfig = require('./Utils/multer');
 
@@ -26,7 +27,7 @@ routes.put('/demand/create-demand-update/:id', verifyJWT, DemandController.creat
 routes.put('/demand/update-demand-update/:id', verifyJWT, DemandController.updateDemandUpdate);
 routes.put('/demand/delete-demand-update/:id', verifyJWT, DemandController.deleteDemandUpdate);
 routes.post('/demand/upload-file/:id', verifyJWT, multer(multerConfig).single('file'), DemandController.uploadFile);
-routes.get('/demand/file/:idFile', DemandController.getFile);
+routes.get('/demand/file/:idFile', verifyJWT, DemandController.getFile);
 routes.get('/demand/history/:id', verifyJWT, DemandController.history);
 routes.get('/statistic/category', verifyJWT, DemandController.demandsCategoriesStatistic);
 routes.get('/statistic/sector', verifyJWT, DemandController.demandsSectorsStatistic);
