@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 function verifyJWT(req, res, next) {
-  const token = req.headers['x-access-token'];
+  let token = req.headers['x-access-token'];
+  // eslint-disable-next-line dot-notation
+  const tokenQuery = req.query['token'];
+
+  if (tokenQuery) {
+    token = tokenQuery;
+  }
 
   if (!token) {
     return res.status(401).json({ auth: false, message: 'No token was provided', errorCode: 401 });
