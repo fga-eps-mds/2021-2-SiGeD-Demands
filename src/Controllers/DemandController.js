@@ -653,6 +653,34 @@ const newestFourDemandsGet = async (req, res) => {
   return res.status(200).json(demands);
 };
 
+const uploadFile = async (req, res) => {
+  
+  const { id } = req.params;
+
+  const name = req.file.originalname;
+  const size = req.file.size;
+  const path = `./files/uploads/${req.file.filename}`;
+
+
+  try {
+
+    const newFile = await File.create({
+      name: name,
+      path: path,
+      size: size,
+      demandId: id,
+      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+    });
+
+    return res.json(newFile);
+  } catch {
+      console.log(err)
+      return res.status(400).json({ err: 'Failed to save file.' });
+  }
+
+}
+
 module.exports = {
   demandGet,
   demandCreate,
@@ -669,4 +697,5 @@ module.exports = {
   demandsSectorsStatistic,
   history,
   newestFourDemandsGet,
+  uploadFile,
 };
