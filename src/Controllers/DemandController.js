@@ -598,6 +598,16 @@ const deleteDemandUpdate = async (req, res) => {
     const updateList = demand.updateList.filter(
       (update) => String(update._id) !== updateListID,
     );
+    const difference = demand.updateList.filter((x) => updateList.indexOf(x) === -1);
+    if (difference[0].fileID.length > 0) {
+      const fileID = difference[0].fileID[0];
+      const fileObject = await File.findOne({ _id: fileID });
+      const pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+      if (fs.existsSync(pathFile)) {
+        fs.unlinkSync(pathFile);
+      }
+      await File.deleteOne({ _id: fileID });
+    }
 
     const updateStatus = await Demand.findOneAndUpdate(
       { _id: id },
