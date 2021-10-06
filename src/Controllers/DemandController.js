@@ -661,7 +661,10 @@ const getFile = async (req, res) => {
   const { idFile } = req.params;
   try {
     const fileObject = await File.findOne({ _id: idFile });
-    const pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+    let pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+    if (!fs.existsSync(pathFile)) {
+      pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'Error', 'PDF_NOT_FOUND.pdf');
+    }
     const file = fs.createReadStream(pathFile);
     res.contentType('application/pdf');
     return file.pipe(res);
