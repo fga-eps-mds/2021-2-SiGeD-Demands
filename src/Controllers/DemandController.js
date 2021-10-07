@@ -1,20 +1,23 @@
-const mongoose = require("mongoose");
-const moment = require("moment-timezone");
-const Demand = require("../Models/DemandSchema");
-const Category = require("../Models/CategorySchema");
-const validation = require("../Utils/validate");
+const mongoose = require('mongoose');
+const moment = require('moment-timezone');
+const fs = require('fs');
+const pathR = require('path');
+const Demand = require('../Models/DemandSchema');
+const Category = require('../Models/CategorySchema');
+const validation = require('../Utils/validate');
+const { getClients } = require('../Services/Axios/clientService');
+const { getUser } = require('../Services/Axios/userService');
+const verifyChanges = require('../Utils/verifyChanges');
+const File = require('../Models/FileSchema');
 
-const { getClients } = require("../Services/Axios/clientService");
 const {
   notifyDemandCreated,
   scheduleDemandComingAlert,
-} = require("../Utils/mailer");
-const { getUser } = require("../Services/Axios/userService");
-const verifyChanges = require("../Utils/verifyChanges");
+} = require('../Utils/mailer');
 
 const demandGetWithClientsNames = async (req, res) => {
   try {
-    const token = req.headers["x-access-token"];
+    const token = req.headers['x-access-token'];
     const { open } = req.query;
     const demandsWithClients = [];
     let demands;
@@ -24,10 +27,10 @@ const demandGetWithClientsNames = async (req, res) => {
       return res.status(400).json({ err: clients.error });
     }
 
-    if (open === "false") {
-      demands = await Demand.find({ open }).populate("categoryID");
+    if (open === 'false') {
+      demands = await Demand.find({ open }).populate('categoryID');
     } else {
-      demands = await Demand.find({ open: true }).populate("categoryID");
+      demands = await Demand.find({ open: true }).populate('categoryID');
     }
 
     clients.map((client) => {
@@ -57,21 +60,21 @@ const demandGetWithClientsNames = async (req, res) => {
     });
     return res.json(demandsWithClients);
   } catch {
-    return res.status(400).json({ err: "Could not get demands" });
+    return res.status(400).json({ err: 'Could not get demands' });
   }
 };
 
 const demandGet = async (req, res) => {
   const { open } = req.query;
-  if (open === "false") {
-    const demands = await Demand.find({ open }).populate("categoryID");
+  if (open === 'false') {
+    const demands = await Demand.find({ open }).populate('categoryID');
     return res.json(demands);
   }
-  if (open === "true") {
-    const demands = await Demand.find({ open: true }).populate("categoryID");
+  if (open === 'true') {
+    const demands = await Demand.find({ open: true }).populate('categoryID');
     return res.json(demands);
   }
-  const demands = await Demand.find().populate("categoryID");
+  const demands = await Demand.find().populate('categoryID');
   return res.json(demands);
 };
 
@@ -79,39 +82,39 @@ const demandsCategoriesStatistic = async (req, res) => {
   const {
     isDemandActive, idSector, idCategory, initialDate, finalDate,
   } = req.query;
-  
+
   let isActive;
   if (isDemandActive === 'true') {
     isActive = true;
   } else if (isDemandActive === 'false') {
     isActive = false;
   } else {
-    isActive = {$exists: true};
+    isActive = { $exists: true };
   }
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
-    { $unwind: "$categoryID" },
+    { $unwind: '$categoryID' },
     {
       $lookup: {
         from: Category.collection.name,
-        localField: "categoryID",
-        foreignField: "_id",
-        as: "categories",
+        localField: 'categoryID',
+        foreignField: '_id',
+        as: 'categories',
       },
     },
     {
       $group: {
-        _id: "$categoryID",
-        categories: { $first: "$categories" },
+        _id: '$categoryID',
+        categories: { $first: '$categories' },
         demandas: { $sum: 1 },
       },
     },
   ];
 
   try {
-    if (idSector && idSector !== "null" && idSector !== "undefined") {
-      if (idCategory && idCategory !== "null" && idCategory !== "undefined") {
+    if (idSector && idSector !== 'null' && idSector !== 'undefined') {
+      if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
         const categoryId = mongoose.Types.ObjectId(idCategory);
         aggregatorOpts.unshift({
           $match: {
@@ -138,13 +141,13 @@ const demandsCategoriesStatistic = async (req, res) => {
       }
       aggregatorOpts.unshift({
         $addFields: {
-          sectorID: { $arrayElemAt: ["$sectorHistory.sectorID", -1] },
+          sectorID: { $arrayElemAt: ['$sectorHistory.sectorID', -1] },
         },
       });
     } else if (
-      idCategory &&
-      idCategory !== "null" &&
-      idCategory !== "undefined"
+      idCategory
+      && idCategory !== 'null'
+      && idCategory !== 'undefined'
     ) {
       const categoryId = mongoose.Types.ObjectId(idCategory);
       aggregatorOpts.unshift({
@@ -176,33 +179,35 @@ const demandsCategoriesStatistic = async (req, res) => {
     const statistics = await Demand.aggregate(aggregatorOpts).exec();
     return res.json(statistics);
   } catch {
-    return res.status(400).json({ err: "failed to generate statistics" });
+    return res.status(400).json({ err: 'failed to generate statistics' });
   }
 };
 
 const demandsSectorsStatistic = async (req, res) => {
-  const { isDemandActive, idCategory, initialDate, finalDate } = req.query;
-  
+  const {
+    isDemandActive, idCategory, initialDate, finalDate,
+  } = req.query;
+
   let isActive;
   if (isDemandActive === 'true') {
     isActive = true;
   } else if (isDemandActive === 'false') {
     isActive = false;
   } else {
-    isActive = {$exists: true};
+    isActive = { $exists: true };
   }
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
     {
       $group: {
-        _id: { $last: "$sectorHistory.sectorID" },
+        _id: { $last: '$sectorHistory.sectorID' },
         total: { $sum: 1 },
       },
     },
   ];
 
-  if (idCategory && idCategory !== "null" && idCategory !== "undefined") {
+  if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
     try {
       const objectID = mongoose.Types.ObjectId(idCategory);
       aggregatorOpts.unshift({
@@ -235,7 +240,7 @@ const demandsSectorsStatistic = async (req, res) => {
     console.log(statistics);
     return res.json(statistics);
   } catch (err) {
-    return res.status(400).json({ err: "failed to generate statistics" });
+    return res.status(400).json({ err: 'failed to generate statistics' });
   }
 };
 
@@ -258,12 +263,12 @@ const demandCreate = async (req, res) => {
       categoryID,
       sectorID,
       clientID,
-      userID
+      userID,
     );
     if (validFields.length) {
       return res.status(400).json({ status: validFields });
     }
-    const token = req.headers["x-access-token"];
+    const token = req.headers['x-access-token'];
 
     const user = await getUser(userID, token);
 
@@ -271,19 +276,19 @@ const demandCreate = async (req, res) => {
       return res.status(400).json({ message: user.error });
     }
     const date = moment
-      .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+      .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
       .toDate();
     const retroactiveDate = moment(demandDate).toDate();
     retroactiveDate.setHours(
       date.getHours(),
       date.getMinutes(),
-      date.getSeconds()
+      date.getSeconds(),
     );
 
     const newDemand = await Demand.create({
       name,
       description,
-      process: process || "",
+      process: process || '',
       categoryID,
       sectorHistory: {
         sectorID,
@@ -295,7 +300,7 @@ const demandCreate = async (req, res) => {
       demandHistory: {
         userID,
         date,
-        label: "created",
+        label: 'created',
       },
       createdAt: demandDate ? retroactiveDate : date,
       updatedAt: date,
@@ -307,14 +312,15 @@ const demandCreate = async (req, res) => {
     return res.json(newDemand);
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "Failed to create demand" });
+    return res.status(500).json({ message: 'Failed to create demand' });
   }
 };
 
 const demandUpdate = async (req, res) => {
   const { id } = req.params;
-  const { name, description, process, categoryID, sectorID, clientID, userID } =
-    req.body;
+  const {
+    name, description, process, categoryID, sectorID, clientID, userID,
+  } = req.body;
 
   const validFields = validation.validateDemand(
     name,
@@ -322,7 +328,7 @@ const demandUpdate = async (req, res) => {
     categoryID,
     sectorID,
     clientID,
-    userID
+    userID,
   );
 
   if (validFields.length) {
@@ -330,7 +336,7 @@ const demandUpdate = async (req, res) => {
   }
 
   try {
-    const token = req.headers["x-access-token"];
+    const token = req.headers['x-access-token'];
 
     const user = await getUser(userID, token);
 
@@ -351,15 +357,15 @@ const demandUpdate = async (req, res) => {
         userID,
         demandHistory,
         updatedAt: moment
-          .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
           .toDate(),
       },
       { new: true },
-      (err) => err
+      (err) => err,
     );
     return res.json(updateStatus);
   } catch {
-    return res.status(400).json({ err: "invalid id" });
+    return res.status(400).json({ err: 'invalid id' });
   }
 };
 
@@ -378,25 +384,25 @@ const toggleDemand = async (req, res) => {
       {
         open,
         updatedAt: moment
-          .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
           .toDate(),
       },
       { new: true },
-      (demand) => demand
+      (demand) => demand,
     );
     return res.json(updateStatus);
   } catch {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
 const demandId = async (req, res) => {
   const { id } = req.params;
   try {
-    const demand = await Demand.findOne({ _id: id }).populate("categoryID");
+    const demand = await Demand.findOne({ _id: id }).populate('categoryID');
     return res.status(200).json(demand);
   } catch {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -414,28 +420,26 @@ const updateSectorDemand = async (req, res) => {
   try {
     const demandFound = await Demand.findOne({ _id: id });
 
-    demandFound.sectorHistory[demandFound.sectorHistory.length - 1].sectorID =
-      sectorID;
+    demandFound.sectorHistory[demandFound.sectorHistory.length - 1].sectorID = sectorID;
 
-    demandFound.sectorHistory[demandFound.sectorHistory.length - 1].updatedAt =
-      moment
-        .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
-        .toDate();
+    demandFound.sectorHistory[demandFound.sectorHistory.length - 1].updatedAt = moment
+      .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+      .toDate();
 
     const updateStatus = await Demand.findOneAndUpdate(
       { _id: id },
       {
         sectorHistory: demandFound.sectorHistory,
         updatedAt: moment
-          .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
           .toDate(),
       },
       { new: true },
-      (user) => user
+      (user) => user,
     );
     return res.json(updateStatus);
   } catch {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -456,10 +460,10 @@ const forwardDemand = async (req, res) => {
     demandFound.sectorHistory = demandFound.sectorHistory.push({
       sectorID,
       createdAt: moment
-        .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
         .toDate(),
       updatedAt: moment
-        .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
         .toDate(),
     });
 
@@ -469,11 +473,11 @@ const forwardDemand = async (req, res) => {
         sectorHistory: demandFound.sectorHistory,
       },
       { new: true },
-      (user) => user
+      (user) => user,
     );
     return res.json(updateStatus);
   } catch (error) {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -495,7 +499,7 @@ const createDemandUpdate = async (req, res) => {
     visibilityRestriction,
     userSector,
     userID,
-    important
+    important,
   );
 
   if (validFields.length) {
@@ -513,10 +517,10 @@ const createDemandUpdate = async (req, res) => {
       visibilityRestriction,
       important,
       createdAt: moment
-        .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
         .toDate(),
       updatedAt: moment
-        .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
         .toDate(),
     });
 
@@ -526,12 +530,12 @@ const createDemandUpdate = async (req, res) => {
         updateList: demandFound.updateList,
       },
       { new: true },
-      (user) => user
+      (user) => user,
     );
 
     return res.json(updateStatus);
   } catch {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -552,7 +556,7 @@ const updateDemandUpdate = async (req, res) => {
     visibilityRestriction,
     userSector,
     userID,
-    important
+    important,
   );
 
   if (validFields.length) {
@@ -561,26 +565,26 @@ const updateDemandUpdate = async (req, res) => {
 
   try {
     const final = await Demand.findOneAndUpdate(
-      { "updateList._id": updateListID },
+      { 'updateList._id': updateListID },
       {
         $set: {
-          "updateList.$.userName": userName,
-          "updateList.$.userSector": userSector,
-          "updateList.$.userID": userID,
-          "updateList.$.description": description,
-          "updateList.$.visibilityRestriction": visibilityRestriction,
-          "updateList.$.important": important,
-          "updateList.$.updatedAt": moment
-            .utc(moment.tz("America/Sao_Paulo").format("YYYY-MM-DDTHH:mm:ss"))
+          'updateList.$.userName': userName,
+          'updateList.$.userSector': userSector,
+          'updateList.$.userID': userID,
+          'updateList.$.description': description,
+          'updateList.$.visibilityRestriction': visibilityRestriction,
+          'updateList.$.important': important,
+          'updateList.$.updatedAt': moment
+            .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
             .toDate(),
         },
       },
       { new: true },
-      (user) => user
+      (user) => user,
     );
     return res.json(final);
   } catch {
-    return res.status(400).json({ err: "Invalid ID" });
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -592,8 +596,18 @@ const deleteDemandUpdate = async (req, res) => {
   try {
     const demand = await Demand.findOne({ _id: id });
     const updateList = demand.updateList.filter(
-      (update) => String(update._id) !== updateListID
+      (update) => String(update._id) !== updateListID,
     );
+    const difference = demand.updateList.filter((x) => updateList.indexOf(x) === -1);
+    if (difference[0].fileID.length > 0) {
+      const fileID = difference[0].fileID[0];
+      const fileObject = await File.findOne({ _id: fileID });
+      const pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+      if (fs.existsSync(pathFile)) {
+        fs.unlinkSync(pathFile);
+      }
+      await File.deleteOne({ _id: fileID });
+    }
 
     const updateStatus = await Demand.findOneAndUpdate(
       { _id: id },
@@ -601,11 +615,11 @@ const deleteDemandUpdate = async (req, res) => {
         updateList,
       },
       { new: true },
-      (user) => user
+      (user) => user,
     );
     return res.json(updateStatus);
   } catch (error) {
-    return res.status(400).json({ err: "failure" });
+    return res.status(400).json({ err: 'failure' });
   }
 };
 
@@ -613,8 +627,8 @@ const history = async (req, res) => {
   const { id } = req.params;
 
   try {
-    let error = "";
-    const token = req.headers["x-access-token"];
+    let error = '';
+    const token = req.headers['x-access-token'];
     const demandFound = await Demand.findOne({ _id: id });
     const userHistory = await Promise.all(
       demandFound.demandHistory.map(async (elem) => {
@@ -636,14 +650,14 @@ const history = async (req, res) => {
             role: user.role,
           },
         };
-      })
+      }),
     );
     if (error) {
       return res.status(400).json({ message: error });
     }
     return res.json(userHistory);
   } catch {
-    return res.status(400).json({ message: "Demand not found" });
+    return res.status(400).json({ message: 'Demand not found' });
   }
 };
 
@@ -653,33 +667,75 @@ const newestFourDemandsGet = async (req, res) => {
   return res.status(200).json(demands);
 };
 
-const uploadFile = async (req, res) => {
-  
-  const { id } = req.params;
-
-  const name = req.file.originalname;
-  const size = req.file.size;
-  const path = `./files/uploads/${req.file.filename}`;
-
-
+const getFile = async (req, res) => {
+  const { idFile } = req.params;
   try {
+    const fileObject = await File.findOne({ _id: idFile });
+    let pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+    if (!fs.existsSync(pathFile)) {
+      pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'Error', 'PDF_NOT_FOUND.pdf');
+    }
+    const file = fs.createReadStream(pathFile);
+    res.contentType('application/pdf');
+    return file.pipe(res);
+  } catch (err) {
+    return res.status(400).json({ err: 'Failed to get file.' });
+  }
+};
 
+const uploadFile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      userName,
+      userSector,
+      userId,
+      description,
+      important,
+      visibility,
+    } = req.body;
+    const name = req.file.originalname;
+    const { size } = req.file;
+    const path = req.file.filename;
     const newFile = await File.create({
-      name: name,
-      path: path,
-      size: size,
+      name,
+      path,
+      size,
       demandId: id,
       createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
       updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
     });
 
+    const validFields = validation.validateDemandUpdate(
+      userName, description, visibility, userSector, userId, important,
+    );
+
+    if (validFields.length) {
+      return res.status(400).json({ status: validFields });
+    }
+
+    const demandFound = await Demand.findOne({ _id: id });
+
+    demandFound.updateList = demandFound.updateList.push({
+      userName,
+      userSector,
+      userId,
+      fileID: newFile._id,
+      description,
+      visibility,
+      important,
+      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+    });
+
+    await Demand.findOneAndUpdate({ _id: id }, {
+      updateList: demandFound.updateList,
+    }, { new: true }, (user) => user);
     return res.json(newFile);
   } catch {
-      console.log(err)
-      return res.status(400).json({ err: 'Failed to save file.' });
+    return res.status(400).json({ err: 'Failed to save file.' });
   }
-
-}
+};
 
 module.exports = {
   demandGet,
@@ -698,4 +754,5 @@ module.exports = {
   history,
   newestFourDemandsGet,
   uploadFile,
+  getFile,
 };
