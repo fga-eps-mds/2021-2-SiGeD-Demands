@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const Alert = require('../Models/AlertSchema');
 const validation = require('../Utils/validate');
-const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
+const { defaultDateFormat } = require('../Utils/auxiliaryFunctions');
 
 const alertGet = async (req, res) => {
   const alerts = await Alert.find();

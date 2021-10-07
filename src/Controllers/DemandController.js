@@ -9,8 +9,7 @@ const { getClients } = require('../Services/Axios/clientService');
 const { getUser } = require('../Services/Axios/userService');
 const verifyChanges = require('../Utils/verifyChanges');
 const File = require('../Models/FileSchema');
-const { checkDemandActivated, checkDifference } = require('./AuxiliaryFunctions/demand');
-const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
+const { checkDemandActivated, checkDifference, defaultDateFormat } = require('../Utils/auxiliaryFunctions');
 
 const {
   notifyDemandCreated,

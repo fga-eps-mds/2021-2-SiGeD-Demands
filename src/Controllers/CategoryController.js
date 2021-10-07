@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
-const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
+const { defaultDateFormat } = require('../Utils/auxiliaryFunctions');
 
 const categoryGet = async (req, res) => {
   const categories = await Category.find();
