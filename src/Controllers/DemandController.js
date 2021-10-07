@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 const fs = require('fs');
-const pathR = require('path');
+const pathFunction = require('path');
 const Demand = require('../Models/DemandSchema');
 const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
@@ -9,6 +9,8 @@ const { getClients } = require('../Services/Axios/clientService');
 const { getUser } = require('../Services/Axios/userService');
 const verifyChanges = require('../Utils/verifyChanges');
 const File = require('../Models/FileSchema');
+const { checkDemandActivated, checkDifference } = require('./AuxiliaryFunctions/demand');
+const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
 
 const {
   notifyDemandCreated,
@@ -83,14 +85,8 @@ const demandsCategoriesStatistic = async (req, res) => {
     isDemandActive, idSector, idCategory, initialDate, finalDate,
   } = req.query;
 
-  let isActive;
-  if (isDemandActive === 'true') {
-    isActive = true;
-  } else if (isDemandActive === 'false') {
-    isActive = false;
-  } else {
-    isActive = { $exists: true };
-  }
+  const isActive = checkDemandActivated(isDemandActive);
+
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
@@ -188,14 +184,7 @@ const demandsSectorsStatistic = async (req, res) => {
     isDemandActive, idCategory, initialDate, finalDate,
   } = req.query;
 
-  let isActive;
-  if (isDemandActive === 'true') {
-    isActive = true;
-  } else if (isDemandActive === 'false') {
-    isActive = false;
-  } else {
-    isActive = { $exists: true };
-  }
+  const isActive = checkDemandActivated(isDemandActive);
   const completeFinalDate = `${finalDate}T24:00:00`;
 
   const aggregatorOpts = [
@@ -237,7 +226,6 @@ const demandsSectorsStatistic = async (req, res) => {
 
   try {
     const statistics = await Demand.aggregate(aggregatorOpts).exec();
-    console.log(statistics);
     return res.json(statistics);
   } catch (err) {
     return res.status(400).json({ err: 'failed to generate statistics' });
@@ -276,7 +264,7 @@ const demandCreate = async (req, res) => {
       return res.status(400).json({ message: user.error });
     }
     const date = moment
-      .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+      .utc(defaultDateFormat())
       .toDate();
     const retroactiveDate = moment(demandDate).toDate();
     retroactiveDate.setHours(
@@ -357,7 +345,7 @@ const demandUpdate = async (req, res) => {
         userID,
         demandHistory,
         updatedAt: moment
-          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+          .utc(defaultDateFormat())
           .toDate(),
       },
       { new: true },
@@ -384,7 +372,7 @@ const toggleDemand = async (req, res) => {
       {
         open,
         updatedAt: moment
-          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+          .utc(defaultDateFormat())
           .toDate(),
       },
       { new: true },
@@ -423,7 +411,7 @@ const updateSectorDemand = async (req, res) => {
     demandFound.sectorHistory[demandFound.sectorHistory.length - 1].sectorID = sectorID;
 
     demandFound.sectorHistory[demandFound.sectorHistory.length - 1].updatedAt = moment
-      .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+      .utc(defaultDateFormat())
       .toDate();
 
     const updateStatus = await Demand.findOneAndUpdate(
@@ -431,7 +419,7 @@ const updateSectorDemand = async (req, res) => {
       {
         sectorHistory: demandFound.sectorHistory,
         updatedAt: moment
-          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+          .utc(defaultDateFormat())
           .toDate(),
       },
       { new: true },
@@ -460,10 +448,10 @@ const forwardDemand = async (req, res) => {
     demandFound.sectorHistory = demandFound.sectorHistory.push({
       sectorID,
       createdAt: moment
-        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+        .utc(defaultDateFormat())
         .toDate(),
       updatedAt: moment
-        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+        .utc(defaultDateFormat())
         .toDate(),
     });
 
@@ -517,10 +505,10 @@ const createDemandUpdate = async (req, res) => {
       visibilityRestriction,
       important,
       createdAt: moment
-        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+        .utc(defaultDateFormat())
         .toDate(),
       updatedAt: moment
-        .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+        .utc(defaultDateFormat())
         .toDate(),
     });
 
@@ -575,7 +563,7 @@ const updateDemandUpdate = async (req, res) => {
           'updateList.$.visibilityRestriction': visibilityRestriction,
           'updateList.$.important': important,
           'updateList.$.updatedAt': moment
-            .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+            .utc(defaultDateFormat())
             .toDate(),
         },
       },
@@ -598,11 +586,12 @@ const deleteDemandUpdate = async (req, res) => {
     const updateList = demand.updateList.filter(
       (update) => String(update._id) !== updateListID,
     );
-    const difference = demand.updateList.filter((x) => updateList.indexOf(x) === -1);
+    const difference = checkDifference(demand.updateList, updateList);
+
     if (difference[0].fileID.length > 0) {
       const fileID = difference[0].fileID[0];
       const fileObject = await File.findOne({ _id: fileID });
-      const pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+      const pathFile = pathFunction.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
       if (fs.existsSync(pathFile)) {
         fs.unlinkSync(pathFile);
       }
@@ -671,9 +660,9 @@ const getFile = async (req, res) => {
   const { idFile } = req.params;
   try {
     const fileObject = await File.findOne({ _id: idFile });
-    let pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
+    let pathFile = pathFunction.resolve(__dirname, '..', '..', 'files', 'uploads', `${fileObject.path}`);
     if (!fs.existsSync(pathFile)) {
-      pathFile = pathR.resolve(__dirname, '..', '..', 'files', 'Error', 'PDF_NOT_FOUND.pdf');
+      pathFile = pathFunction.resolve(__dirname, '..', '..', 'files', 'Error', 'PDF_NOT_FOUND.pdf');
     }
     const file = fs.createReadStream(pathFile);
     res.contentType('application/pdf');
@@ -702,8 +691,8 @@ const uploadFile = async (req, res) => {
       path,
       size,
       demandId: id,
-      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
-      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      createdAt: moment.utc(defaultDateFormat()).toDate(),
+      updatedAt: moment.utc(defaultDateFormat()).toDate(),
     });
 
     const validFields = validation.validateDemandUpdate(
@@ -724,8 +713,8 @@ const uploadFile = async (req, res) => {
       description,
       visibility,
       important,
-      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
-      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      createdAt: moment.utc(defaultDateFormat()).toDate(),
+      updatedAt: moment.utc(defaultDateFormat()).toDate(),
     });
 
     await Demand.findOneAndUpdate({ _id: id }, {

@@ -1,6 +1,7 @@
 const moment = require('moment-timezone');
 const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
+const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
 
 const categoryGet = async (req, res) => {
   const categories = await Category.find();
@@ -21,8 +22,8 @@ const categoryCreate = async (req, res) => {
     name,
     description,
     color,
-    createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
-    updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+    createdAt: moment.utc(defaultDateFormat()).toDate(),
+    updatedAt: moment.utc(defaultDateFormat()).toDate(),
   });
 
   return res.json(newCategory);
@@ -43,7 +44,7 @@ const categoryUpdate = async (req, res) => {
       name,
       description,
       color,
-      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      updatedAt: moment.utc(defaultDateFormat()).toDate(),
     }, { new: true }, (user) => user);
     return res.json(updateStatus);
   } catch {

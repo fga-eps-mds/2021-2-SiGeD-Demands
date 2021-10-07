@@ -1,6 +1,7 @@
 const moment = require('moment-timezone');
 const Alert = require('../Models/AlertSchema');
 const validation = require('../Utils/validate');
+const { defaultDateFormat } = require('./AuxiliaryFunctions/usedForAll');
 
 const alertGet = async (req, res) => {
   const alerts = await Alert.find();
@@ -12,7 +13,7 @@ const alertGetByDemandId = async (req, res) => {
   const { demandID } = req.params;
 
   const filteredAlerts = [];
-  const dateNow = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DD')).toDate();
+  const dateNow = moment.utc(defaultDateFormat()).toDate();
   const sevenDaysAfter = moment.utc(moment.tz('America/Sao_Paulo').add(7, 'days').format('YYYY-MM-DD')).toDate();
 
   try {
@@ -34,7 +35,7 @@ const alertGetBySectorId = async (req, res) => {
   const { sectorID } = req.params;
 
   const filteredAlerts = [];
-  const dateNow = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DD')).toDate();
+  const dateNow = moment.utc(defaultDateFormat()).toDate();
   const sevenDaysAfter = moment.utc(moment.tz('America/Sao_Paulo').add(7, 'days').format('YYYY-MM-DD')).toDate();
 
   try {
@@ -71,8 +72,8 @@ const alertCreate = async (req, res) => {
       alertClient,
       demandID,
       sectorID,
-      createdAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
-      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      createdAt: moment.utc(defaultDateFormat()).toDate(),
+      updatedAt: moment.utc(defaultDateFormat()).toDate(),
     });
     return res.json(newAlert);
   } catch {
@@ -101,7 +102,7 @@ const alertUpdate = async (req, res) => {
       checkbox,
       demandID,
       sectorID,
-      updatedAt: moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate(),
+      updatedAt: moment.utc(defaultDateFormat()).toDate(),
     }, { new: true }, (user) => user);
     return res.json(updateStatus);
   } catch {
@@ -122,5 +123,10 @@ const alertDelete = async (req, res) => {
 };
 
 module.exports = {
-  alertGet, alertCreate, alertGetByDemandId, alertGetBySectorId, alertUpdate, alertDelete,
+  alertGet,
+  alertCreate,
+  alertGetByDemandId,
+  alertGetBySectorId,
+  alertUpdate,
+  alertDelete,
 };
