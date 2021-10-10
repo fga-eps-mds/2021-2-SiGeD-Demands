@@ -15,7 +15,7 @@ const DemandSchema = new mongoose.Schema({
     require: true,
   },
   process: {
-    type: String,
+    type: [String],
     require: false,
   },
   categoryID: {
