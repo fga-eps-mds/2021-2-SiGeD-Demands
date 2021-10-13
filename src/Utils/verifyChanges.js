@@ -5,8 +5,8 @@ const buildHistory = (body, demand, label) => {
   const date = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate();
   return {
     label,
-    before: demand[label],
-    after: body[label],
+    before: label == 'process' ? '[' + demand[label].join([separator = ',']) + ']': demand[label],
+    after: label == 'process' ? '[' + body[label].join([separator = ',']) + ']': body[label],
     userID: body.userID,
     date,
   };
@@ -19,21 +19,8 @@ const biggerArray = (arr1, arr2) => {
   return { bigger: arr2, smaller: arr1, body: false };
 };
 
-const verifyChanges = async (body, id) => {
+const verifyCategoriesListChanged = (body, demand, newHistory) => {
   const date = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate();
-  const demand = await Demand.findOne({ _id: id });
-  const newHistory = [];
-
-  if (body.name !== demand.name) {
-    newHistory.push(buildHistory(body, demand, 'name'));
-  }
-  if (body.description !== demand.description) {
-    newHistory.push(buildHistory(body, demand, 'description'));
-  }
-  if (body.process !== demand.process) {
-    newHistory.push(buildHistory(body, demand, 'process'));
-  }
-
   const categoryArrays = biggerArray(body.categoryID, demand.categoryID);
   categoryArrays.bigger.map((item, index) => {
     const value0 = String(item ?? '');
@@ -49,6 +36,26 @@ const verifyChanges = async (body, id) => {
     }
     return item;
   });
+};
+
+const verifyInputsChanged = (body, demand, newHistory) => {
+  if (body.name !== demand.name) {
+    newHistory.push(buildHistory(body, demand, 'name'));
+  }
+  if (body.description !== demand.description) {
+    newHistory.push(buildHistory(body, demand, 'description'));
+  }
+  if (body.process !== demand.process) {
+    newHistory.push(buildHistory(body, demand, 'process'));
+  }
+};
+
+const verifyChanges = async (body, id) => {
+  const demand = await Demand.findOne({ _id: id });
+  const newHistory = [];
+
+  verifyInputsChanged(body, demand, newHistory);
+  verifyCategoriesListChanged(body, demand, newHistory);
 
   return [...demand.demandHistory, ...newHistory];
 };
