@@ -1,5 +1,7 @@
+const multer = require('multer');
 const DemandController = require('../Controllers/DemandController');
 const { verifyJWT } = require('../Utils/functionsJWT');
+const multerConfig = require('../Utils/multer');
 
 const DemandsRoutes = (routes) => {
   routes.get('/demand', verifyJWT, DemandController.demandGet);
@@ -17,6 +19,8 @@ const DemandsRoutes = (routes) => {
   routes.get('/demand/history/:id', verifyJWT, DemandController.history);
   routes.get('/statistic/category', verifyJWT, DemandController.demandsCategoriesStatistic);
   routes.get('/statistic/sector', verifyJWT, DemandController.demandsSectorsStatistic);
+  routes.post('/demand/upload-file/:id', verifyJWT, multer(multerConfig).single('file'), DemandController.uploadFile);
+  routes.get('/demand/file/:idFile', verifyJWT, DemandController.getFile);
 };
 
 module.exports = { DemandsRoutes };
