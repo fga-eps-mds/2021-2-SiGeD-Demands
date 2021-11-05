@@ -306,8 +306,8 @@ const demandCreate = async (req, res) => {
       updatedAt: date,
     });
 
-    await notifyDemandCreated(clientID, newDemand, token);
-    await scheduleDemandComingAlert(clientID, newDemand, token);
+    // await notifyDemandCreated(clientID, newDemand, token);
+    // await scheduleDemandComingAlert(clientID, newDemand, token);
 
     return res.json(newDemand);
   } catch (err) {
