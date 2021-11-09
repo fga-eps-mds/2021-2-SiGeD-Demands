@@ -22,13 +22,19 @@ const demandGetWithClientsNames = async (req, res) => {
     const demandsWithClients = [];
     let demands;
     const clients = await getClients(token);
-
     if (clients.error) {
       return res.status(400).json({ err: clients.error });
     }
 
     if (open === 'false') {
       demands = await Demand.find({ open }).populate('categoryID');
+    } else if (open === 'null') {
+      demands = await Demand.find({
+        $or: [
+          { open: false },
+          { open: true },
+        ],
+      }).populate('categoryID');
     } else {
       demands = await Demand.find({ open: true }).populate('categoryID');
     }
