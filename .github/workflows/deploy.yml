@@ -14,13 +14,14 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
-        key: ${{ secrets.KEY }}
+        password: ${{ secrets.PASSWORD }}
         script: |
-          cd 2020-2-SiGeD-Demands
+          cd 2021-2-SiGeD-Demands
           docker-compose down
-          git checkout .env
           git checkout master
-          git pull origin master -f
+          git checkout .
+          git pull origin master
           cp prod.env .env
+          docker network create siged_backend
           docker-compose up --build -d
 
