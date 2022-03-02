@@ -327,7 +327,7 @@ describe('Sample Test', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.name).toBe(demand.name);
     expect(res.body.clientID).toBe(demand.clientID);
-    expect(res.body.process).toBe(demand.process);
+    expect(res.body.process.toString()).toBe(demand.process);
     expect(res.body.sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body.userID).toBe(demand.userID);
     expect(res.body.description).toBe(demand.description);
@@ -341,11 +341,24 @@ describe('Sample Test', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body[lastIdx].name).toBe(demand.name);
     expect(res.body[lastIdx].clientID).toBe(demand.clientID);
-    expect(res.body[lastIdx].process).toBe(demand.process);
+    expect(res.body[lastIdx].process.toString()).toBe(demand.process);
     expect(res.body[lastIdx].sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body[lastIdx].userID).toBe(demand.userID);
     expect(res.body[lastIdx].description).toBe(demand.description);
     expect(res.body[lastIdx].open).toBe(false);
+    done();
+  });
+  
+  // Reopen demand
+  it('Close/Open demand', async (done) => {
+    const res = await request(app).put(`/demand/toggle/${id}`).set('x-access-token', token)
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe(demand.name);
+    expect(res.body.clientID).toBe(demand.clientID);
+    expect(res.body.process.toString()).toBe(demand.process);
+    expect(res.body.sectorHistory[0].sectorID).toBe(demand.sectorID);
+    expect(res.body.userID).toBe(demand.userID);
+    expect(res.body.description).toBe(demand.description);
     done();
   });
 
