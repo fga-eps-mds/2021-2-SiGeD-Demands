@@ -234,7 +234,7 @@ describe('Sample Test', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.name).toBe(demand.name);
     expect(res.body.description).toBe(demand.description);
-    expect(res.body.process).toBe(demand.process);
+    expect(res.body.process.toString()).toBe(demand.process);
     expect(res.body.sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body.clientID).toBe(demand.clientID);
     expect(res.body.userID).toBe(demand.userID);
