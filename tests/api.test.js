@@ -247,7 +247,7 @@ describe('Sample Test', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.name).toBe(falseDemand.name);
     expect(res.body.description).toBe(falseDemand.description);
-    expect(res.body.process).toBe(falseDemand.process);
+    expect(res.body.process.toString()).toBe(falseDemand.process);
     expect(res.body.sectorHistory[0].sectorID).toBe(falseDemand.sectorID);
     expect(res.body.clientID).toBe(falseDemand.clientID);
     expect(res.body.userID).toBe(falseDemand.userID);
@@ -282,7 +282,7 @@ describe('Sample Test', () => {
     const lastIdx = res.body.length - 1;
     expect(res.body[lastIdx].name).toBe(demand.name);
     expect(res.body[lastIdx].clientID).toBe(demand.clientID);
-    expect(res.body[lastIdx].process).toBe(demand.process);
+    expect(res.body[lastIdx].process.toString()).toBe(demand.process);
     expect(res.body[lastIdx].sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body[lastIdx].userID).toBe(demand.userID);
     expect(res.body[lastIdx].description).toBe(demand.description);
@@ -294,7 +294,7 @@ describe('Sample Test', () => {
     const res = await request(app).get('/demand/?open=true').set('x-access-token', token);
     const lastIdx = res.body.length - 1;
     expect(res.body[lastIdx].name).toBe(demand.name);
-    expect(res.body[lastIdx].process).toBe(demand.process);
+    expect(res.body[lastIdx].process.toString()).toBe(demand.process);
     expect(res.body[lastIdx].clientID).toBe(demand.clientID);
     expect(res.body[lastIdx].sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body[lastIdx].description).toBe(demand.description);
@@ -308,7 +308,7 @@ describe('Sample Test', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.name).toBe(demand.name);
     expect(res.body.description).toBe(demand.description);
-    expect(res.body.process).toBe(demand.process);
+    expect(res.body.process.toString()).toBe(demand.process);
     expect(res.body.sectorHistory[0].sectorID).toBe(demand.sectorID);
     expect(res.body.clientID).toBe(demand.clientID);
     expect(res.body.userID).toBe(demand.userID);
@@ -323,14 +323,14 @@ describe('Sample Test', () => {
 
   // Need to close demand before trying to get closed demands, same goes for getting opened demands
   it('Close/Open demand', async (done) => {
-    const res = await request(app).put(`/demand/toggle/${falseId}`).set('x-access-token', token)
+    const res = await request(app).put(`/demand/toggle/${id}`).set('x-access-token', token)
     expect(res.statusCode).toBe(200);
-    expect(res.body.name).toBe(falseDemand.name);
-    expect(res.body.clientID).toBe(falseDemand.clientID);
-    expect(res.body.process).toBe(falseDemand.process);
-    expect(res.body.sectorHistory[0].sectorID).toBe(falseDemand.sectorID);
-    expect(res.body.userID).toBe(falseDemand.userID);
-    expect(res.body.description).toBe(falseDemand.description);
+    expect(res.body.name).toBe(demand.name);
+    expect(res.body.clientID).toBe(demand.clientID);
+    expect(res.body.process).toBe(demand.process);
+    expect(res.body.sectorHistory[0].sectorID).toBe(demand.sectorID);
+    expect(res.body.userID).toBe(demand.userID);
+    expect(res.body.description).toBe(demand.description);
     done();
   });
 
@@ -339,12 +339,12 @@ describe('Sample Test', () => {
     const res = await request(app).get('/demand?open=false').set('x-access-token', token);
     const lastIdx = res.body.length - 1;
     expect(res.statusCode).toBe(200);
-    expect(res.body[lastIdx].name).toBe(falseDemand.name);
-    expect(res.body[lastIdx].clientID).toBe(falseDemand.clientID);
-    expect(res.body[lastIdx].process).toBe(falseDemand.process);
-    expect(res.body[lastIdx].sectorHistory[0].sectorID).toBe(falseDemand.sectorID);
-    expect(res.body[lastIdx].userID).toBe(falseDemand.userID);
-    expect(res.body[lastIdx].description).toBe(falseDemand.description);
+    expect(res.body[lastIdx].name).toBe(demand.name);
+    expect(res.body[lastIdx].clientID).toBe(demand.clientID);
+    expect(res.body[lastIdx].process).toBe(demand.process);
+    expect(res.body[lastIdx].sectorHistory[0].sectorID).toBe(demand.sectorID);
+    expect(res.body[lastIdx].userID).toBe(demand.userID);
+    expect(res.body[lastIdx].description).toBe(demand.description);
     expect(res.body[lastIdx].open).toBe(false);
     done();
   });
