@@ -1,8 +1,8 @@
 {
-  "name": "2020-2-SiGeD-Demands",
+  "name": "2021-2-SiGeD-Demands",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/fga-eps-mds/2020-2-SiGeD-Demands.git",
+  "repository": "https://github.com/fga-eps-mds/2021-2-SiGeD-Demands.git",
   "author": "<lucascandradex14@gmail.com>",
   "license": "MIT",
   "dependencies": {
