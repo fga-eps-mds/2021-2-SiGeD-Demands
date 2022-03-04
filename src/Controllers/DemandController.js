@@ -29,6 +29,13 @@ const demandGetWithClientsNames = async (req, res) => {
 
     if (open === 'false') {
       demands = await Demand.find({ open }).populate('categoryID');
+    } else if (open === 'null') {
+      demands = await Demand.find({
+        $or: [
+          { open: false },
+          { open: true },
+        ],
+      }).populate('categoryID');
     } else {
       demands = await Demand.find({ open: true }).populate('categoryID');
     }
