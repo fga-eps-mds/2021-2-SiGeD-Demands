@@ -10,10 +10,10 @@ const { getUser } = require('../Services/Axios/userService');
 const verifyChanges = require('../Utils/verifyChanges');
 const File = require('../Models/FileSchema');
 
-/*const {
+/* const {
   notifyDemandCreated,
   scheduleDemandComingAlert,
-} = require('../Utils/mailer');*/
+} = require('../Utils/mailer'); */
 
 const demandGetWithClientsNames = async (req, res) => {
   try {

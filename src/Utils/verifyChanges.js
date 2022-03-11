@@ -5,8 +5,8 @@ const buildHistory = (body, demand, label) => {
   const date = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate();
   return {
     label,
-    before: label == 'process' ? '[' + demand[label].join([separator = ',']) + ']': demand[label],
-    after: label == 'process' ? '[' + body[label].join([separator = ',']) + ']': body[label],
+    before: label === 'process' ? `[${demand[label].join([separator = ','])}]` : demand[label],
+    after: label === 'process' ? `[${body[label].join([separator = ','])}]` : body[label],
     userID: body.userID,
     date,
   };

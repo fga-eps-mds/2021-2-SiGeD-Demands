@@ -13,5 +13,5 @@ jobs:
       run: yarn install
 
     - name: ESLint check
-      run: npx eslint ./src --ext --fix .js
+      run: npx eslint ./src --ext .js --fix
   
