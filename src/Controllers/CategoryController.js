@@ -17,6 +17,12 @@ const categoryCreate = async (req, res) => {
     return res.status(400).json({ status: validFields });
   }
 
+  const verifyCategory = await Category.findOne({ name: req.body.name });
+
+  if (verifyCategory) {
+    return res.status(409).json({ message: 'The category already exists.' });
+  }
+
   const newCategory = await Category.create({
     name,
     description,
