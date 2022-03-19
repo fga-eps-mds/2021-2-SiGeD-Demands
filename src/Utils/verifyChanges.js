@@ -60,4 +60,7 @@ const verifyChanges = async (body, id) => {
   return [...demand.demandHistory, ...newHistory];
 };
 
-module.exports = verifyChanges;
+module.exports = {
+  verifyChanges,
+  buildHistory
+};

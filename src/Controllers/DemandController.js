@@ -7,7 +7,7 @@ const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
 const { getClients } = require('../Services/Axios/clientService');
 const { getUser } = require('../Services/Axios/userService');
-const verifyChanges = require('../Utils/verifyChanges');
+const { verifyChanges } = require('../Utils/verifyChanges');
 const File = require('../Models/FileSchema');
 
 /* const {
