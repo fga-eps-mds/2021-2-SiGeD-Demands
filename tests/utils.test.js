@@ -9,8 +9,13 @@ const resExpectedAlert = { subject: subjectAlert, text: textAlert };
 
 const demand = {
   name: 'Nome da Demanda',
-  description: 'Descrição da Demanda'
-};
+  description: 'Descrição da Demanda',
+  process: '000000',
+  categoryID: ['6070b70835599b005b48b32d', '6070b71635599b005b48b32e'],
+  sectorID: '606281ba4772b00034eb13fe',
+  clientID: '6085e65a664ee00049cc7638',
+  userID: '6089c3538dfebe00555bc17e'
+}
 
 const daysBeforeDemand = '5 dias';
 
