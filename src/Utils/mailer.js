@@ -44,4 +44,6 @@ const buildAlertDemandComing = (demand, daysBeforeDemand) => {
 module.exports = {
   notifyDemandCreated,
   scheduleDemandComingAlert,
+  buildAlertDemandComing,
+  buildDemandCreatedEmail,
 };
