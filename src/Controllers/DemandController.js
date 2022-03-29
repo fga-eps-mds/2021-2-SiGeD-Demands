@@ -87,7 +87,7 @@ const demandGet = async (req, res) => {
 
 const demandsCategoriesStatistic = async (req, res) => {
   const {
-    isDemandActive, idSector, idCategory, initialDate, finalDate,
+    isDemandActive, idSector, idCategory, initialDate, finalDate, idClients,
   } = req.query;
 
   let isActive;
@@ -180,6 +180,24 @@ const demandsCategoriesStatistic = async (req, res) => {
     }
   } catch (err) {
     console.error(err);
+  }
+
+  if (idClients && idClients !== 'null' && idClients !== 'undefined') {
+    try {
+      const clientID = String(idClients);
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          clientID,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    } catch (err) {
+      console.error(err.message);
+    }
   }
 
   try {
