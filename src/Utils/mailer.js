@@ -1,6 +1,6 @@
-const { sendEmailToClient } = require('../Services/Axios/clientService');
+/* const { sendEmailToClient } = require('../Services/Axios/clientService');
 
-const notifyDemandCreated = async (clientId, demand, token) => {
+ const notifyDemandCreated = async (clientId, demand, token) => {
   const { subject, text } = buildDemandCreatedEmail(demand);
   const response = await sendEmailToClient(clientId, subject, text, token);
   if (response.status !== 200) throw new Error('Unable to send email to client');
@@ -19,7 +19,7 @@ const scheduleDemandComingAlert = async (
   const response = await sendEmailToClient(clientId, subject, text, token, date.toString());
   if (response.status !== 200) throw new Error('Unable to send email to client');
   return response;
-};
+}; */
 
 const buildDemandCreatedEmail = (demand) => {
   const subject = 'Nova consulta';
@@ -42,6 +42,6 @@ const buildAlertDemandComing = (demand, daysBeforeDemand) => {
 };
 
 module.exports = {
-  notifyDemandCreated,
-  scheduleDemandComingAlert,
+  buildAlertDemandComing,
+  buildDemandCreatedEmail,
 };

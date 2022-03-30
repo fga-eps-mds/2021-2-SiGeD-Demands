@@ -5,8 +5,8 @@ const buildHistory = (body, demand, label) => {
   const date = moment.utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss')).toDate();
   return {
     label,
-    before: label === 'process' ? `[${demand[label].join([separator = ','])}]` : demand[label],
-    after: label === 'process' ? `[${body[label].join([separator = ','])}]` : body[label],
+    before: label === 'process' ? `[${demand[label].join([','])}]` : demand[label],
+    after: label === 'process' ? `[${body[label].join([','])}]` : body[label],
     userID: body.userID,
     date,
   };
@@ -60,4 +60,7 @@ const verifyChanges = async (body, id) => {
   return [...demand.demandHistory, ...newHistory];
 };
 
-module.exports = verifyChanges;
+module.exports = {
+  verifyChanges,
+  buildHistory
+};
