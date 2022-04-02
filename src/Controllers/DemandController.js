@@ -85,6 +85,94 @@ const demandGet = async (req, res) => {
   return res.json(demands);
 };
 
+const demandsClientsStatistic = async (req, res) => {
+  const {
+    isDemandActive, idSector, idCategory, initialDate, finalDate,
+  } = req.query;
+
+  let isActive;
+  if (isDemandActive === 'true') {
+    isActive = true;
+  } else if (isDemandActive === 'false') {
+    isActive = false;
+  } else {
+    isActive = { $exists: true };
+  }
+  const completeFinalDate = `${finalDate}T24:00:00`;
+
+  const aggregatorOpts = [
+    {
+      $group: {
+        _id: '$clientID',
+        demandas: { $sum: 1 },
+      },
+    },
+  ];
+
+  try {
+    if (idSector && idSector !== 'null' && idSector !== 'undefined') {
+      if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
+        const categoryId = mongoose.Types.ObjectId(idCategory);
+        aggregatorOpts.unshift({
+          $match: {
+            open: isActive,
+            sectorID: idSector,
+            categoryID: categoryId,
+            createdAt: {
+              $gte: new Date(initialDate),
+              $lte: new Date(completeFinalDate),
+            },
+          },
+        });
+      } else {
+        aggregatorOpts.unshift({
+          $match: {
+            open: isActive,
+            sectorID: idSector,
+            createdAt: {
+              $gte: new Date(initialDate),
+              $lte: new Date(completeFinalDate),
+            },
+          },
+        });
+      }
+      aggregatorOpts.unshift({
+        $addFields: {
+          sectorID: { $arrayElemAt: ['$sectorHistory.sectorID', -1] },
+        },
+      });
+    } else if (
+      idCategory
+      && idCategory !== 'null'
+      && idCategory !== 'undefined'
+    ) {
+      const categoryId = mongoose.Types.ObjectId(idCategory);
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          categoryID: categoryId,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    } else {
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 const demandsCategoriesStatistic = async (req, res) => {
   const {
     isDemandActive, idSector, idCategory, initialDate, finalDate, idClients,
@@ -794,6 +882,7 @@ module.exports = {
   deleteDemandUpdate,
   demandsCategoriesStatistic,
   demandsSectorsStatistic,
+  demandsClientsStatistic,
   history,
   newestFourDemandsGet,
   uploadFile,
