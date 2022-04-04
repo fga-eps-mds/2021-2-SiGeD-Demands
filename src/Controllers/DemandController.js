@@ -89,7 +89,6 @@ const demandsClientsStatistic = async (req, res) => {
   const {
     isDemandActive, idSector, idCategory, initialDate, finalDate,
   } = req.query;
-
   let isActive;
   if (isDemandActive === 'true') {
     isActive = true;
@@ -170,6 +169,13 @@ const demandsClientsStatistic = async (req, res) => {
     }
   } catch (err) {
     console.error(err);
+  }
+
+  try {
+    const statistics = await Demand.aggregate(aggregatorOpts).exec();
+    return res.json(statistics);
+  } catch {
+    return res.status(400).json({ err: 'failed to generate statistics' });
   }
 }
 
