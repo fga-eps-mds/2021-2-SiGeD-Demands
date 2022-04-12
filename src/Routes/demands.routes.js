@@ -22,6 +22,7 @@ const DemandsRoutes = (routes) => {
   routes.get('/statistic/client', verifyJWT, DemandController.demandsClientsStatistic);
   routes.post('/demand/upload-file/:id', verifyJWT, multer(multerConfig).single('file'), DemandController.uploadFile);
   routes.get('/demand/file/:idFile', verifyJWT, DemandController.getFile);
+  routes.get('/demand/byclient/:clientID/:open', verifyJWT, DemandController.demandByClient);
 };
 
 module.exports = { DemandsRoutes };
