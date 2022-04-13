@@ -26,7 +26,7 @@ const demandGetWithClientsNames = async (req, res) => {
     if (clients.error) {
       return res.status(400).json({ err: clients.error });
     }
-
+    
     if (open === 'false') {
       demands = await Demand.find({ open }).populate('categoryID');
     } else if (open === 'null') {
@@ -533,6 +533,17 @@ const toggleDemand = async (req, res) => {
   }
 };
 
+const demandByClient = async (req, res) => {
+  const { clientID, open } = req.params;
+
+  try {
+    const demand = await Demand.find({ clientID: clientID, open: open }).populate('categoryID');
+    return res.status(200).json(demand);
+  } catch {
+    return res.status(400).json({ err: 'Invalid ID' });
+  }
+};
+
 const demandId = async (req, res) => {
   const { id } = req.params;
   try {
@@ -879,6 +890,7 @@ module.exports = {
   demandCreate,
   demandUpdate,
   toggleDemand,
+  demandByClient,
   demandId,
   updateSectorDemand,
   forwardDemand,
