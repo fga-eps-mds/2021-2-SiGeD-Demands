@@ -1,11 +1,23 @@
 const moment = require('moment-timezone');
+const { getCategories } = require('../../../2021-2-SiGeD-Frontend/src/Services/Axios/demandsServices');
 const Category = require('../Models/CategorySchema');
 const validation = require('../Utils/validate');
+const { demandGet } = require('/DemandController');
 
 const categoryGet = async (req, res) => {
   const categories = await Category.find();
 
+  console.log(categories);
+
   return res.json(categories);
+};
+
+const categoryGetAtivos = async (req, res) => {
+  const categories = await Category.find({ open: true });
+
+  console.log(categories);
+
+  return res.status(200).json(categories);
 };
 
 const categoryCreate = async (req, res) => {
@@ -57,15 +69,46 @@ const categoryUpdate = async (req, res) => {
   }
 };
 
-const categoryDelete = async (req, res) => {
+const toggleCategory = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await Category.deleteOne({ _id: id });
+    const token = req.headers['x-access-token'];
 
-    return res.json({ message: 'success' });
-  } catch (error) {
-    return res.status(400).json({ message: 'failure' });
+    const categoryFound = await Category.findOne({ _id: id })
+
+    const demand = await demandGet(token);
+
+    if (demand.error) {
+      return res.status(400).json({ err: demand.error });
+    }
+
+    for(var i=0; i<demand.length; i++){
+      if(demand[i].categoryID === id && demand[i].open === true){
+        startModal();
+        return;
+      }
+    }
+
+    let { open } = categoryFound;
+
+    open = !categoryFound.open;
+
+    const updateStatus = await Category.findOneAndUpdate(
+      { _id: id },
+      {
+        open,
+        updatedAt: moment
+          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+          .toDate(),
+      },
+      { new: true },
+      (category) => category,
+    );
+
+    return res.json(updateStatus)
+  } catch {
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -81,5 +124,5 @@ const categoryId = async (req, res) => {
 };
 
 module.exports = {
-  categoryGet, categoryCreate, categoryUpdate, categoryDelete, categoryId,
+  categoryGet, categoryCreate, categoryUpdate, toggleCategory, categoryId, categoryGetAtivos,
 };
