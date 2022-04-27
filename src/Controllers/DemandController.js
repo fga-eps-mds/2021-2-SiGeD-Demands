@@ -87,7 +87,7 @@ const demandGet = async (req, res) => {
 
 const demandsClientsStatistic = async (req, res) => {
   const {
-    isDemandActive, idSector, idCategory, initialDate, finalDate,
+    isDemandActive, idSector, idCategory, initialDate, finalDate, idClients,
   } = req.query;
   let isActive;
   if (isDemandActive === 'true') {
@@ -171,13 +171,30 @@ const demandsClientsStatistic = async (req, res) => {
     console.error(err);
   }
 
+  if (idClients && idClients !== 'null' && idClients !== 'undefined') {
+    try {
+      const clientID = String(idClients);
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          clientID,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    } catch (err) {
+      console.error(err.message);
+    }
+  }
   try {
     const statistics = await Demand.aggregate(aggregatorOpts).exec();
     return res.json(statistics);
   } catch {
     return res.status(400).json({ err: 'failed to generate statistics' });
   }
-}
+};
 
 const demandsCategoriesStatistic = async (req, res) => {
   const {
@@ -304,7 +321,7 @@ const demandsCategoriesStatistic = async (req, res) => {
 
 const demandsSectorsStatistic = async (req, res) => {
   const {
-    isDemandActive, idCategory, initialDate, finalDate, idClients,
+    isDemandActive, idSector, idCategory, initialDate, finalDate, idClients,
   } = req.query;
 
   let isActive;
@@ -325,33 +342,68 @@ const demandsSectorsStatistic = async (req, res) => {
       },
     },
   ];
-
-  if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
-    try {
-      const objectID = mongoose.Types.ObjectId(idCategory);
+  
+  try {
+    if (idSector && idSector !== 'null' && idSector !== 'undefined') {
+      if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
+        const categoryId = mongoose.Types.ObjectId(idCategory);
+        aggregatorOpts.unshift({
+          $match: {
+            open: isActive,
+            sectorID: idSector,
+            categoryID: categoryId,
+            createdAt: {
+              $gte: new Date(initialDate),
+              $lte: new Date(completeFinalDate),
+            },
+          },
+        });
+      } else {
+        aggregatorOpts.unshift({
+          $match: {
+            open: isActive,
+            sectorID: idSector,
+            createdAt: {
+              $gte: new Date(initialDate),
+              $lte: new Date(completeFinalDate),
+            },
+          },
+        });
+      }
+      aggregatorOpts.unshift({
+        $addFields: {
+          sectorID: { $arrayElemAt: ['$sectorHistory.sectorID', -1] },
+        },
+      });
+    } else if (
+      idCategory
+      && idCategory !== 'null'
+      && idCategory !== 'undefined'
+    ) {
+      const categoryId = mongoose.Types.ObjectId(idCategory);
       aggregatorOpts.unshift({
         $match: {
           open: isActive,
-          categoryID: objectID,
+          categoryID: categoryId,
           createdAt: {
             $gte: new Date(initialDate),
             $lte: new Date(completeFinalDate),
           },
         },
       });
-    } catch (err) {
-      console.error(err.message);
-    }
-  } else {
-    aggregatorOpts.unshift({
-      $match: {
-        open: isActive,
-        createdAt: {
-          $gte: new Date(initialDate),
-          $lte: new Date(completeFinalDate),
+    } else {
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
         },
-      },
-    });
+      });
+    }
+  } catch (err) {
+    console.error(err);
   }
 
   if (idClients && idClients !== 'null' && idClients !== 'undefined') {
