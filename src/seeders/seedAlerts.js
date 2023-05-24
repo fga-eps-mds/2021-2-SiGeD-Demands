@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 
 const alerts = [
   new Alert({
-    name: 'alerta 1',
+    name: 'ALERTAAAAAAAAAAAAAAAAAAAA',
     description: 'descrição alerta 1',
     date: moment().format('YYYY-MM-DD'),
     demandID: '123456789',
