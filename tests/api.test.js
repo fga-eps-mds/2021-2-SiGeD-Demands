@@ -1166,5 +1166,9 @@ describe('Sample Test', () => {
 })
 
 afterAll(async (done) => {
+  await request(app).delete('/demand/create').set('x-access-token', token).send(demand);
+  await request(app).delete('/demand/create').set('x-access-token', token).send(demand);
+  await request(app).delete('/demand/create').set('x-access-token', token).send(demand);
+  await request(app).delete('/demand/create').set('x-access-token', token).send(demand);
   done();
 });
