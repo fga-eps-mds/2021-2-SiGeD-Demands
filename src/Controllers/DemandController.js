@@ -471,6 +471,22 @@ const demandsSectorsStatistic = async (req, res) => {
         },
       });
     }
+
+    // Match by categoryID if idCategory is provided
+    if (idCategory && idCategory !== 'null' && idCategory !== 'undefined') {
+      const categoryId = mongoose.Types.ObjectId(idCategory);
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          categoryID: categoryId,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    }
+
   } catch (err) {
     return res.status(400).json({ err: 'failed to generate statistics' });
   }
