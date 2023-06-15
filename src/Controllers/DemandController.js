@@ -487,6 +487,21 @@ const demandsSectorsStatistic = async (req, res) => {
       });
     }
 
+    // Match by clientID if idClients is provided
+    if (idClients && idClients !== 'null' && idClients !== 'undefined') {
+      const clientID = String(idClients);
+      aggregatorOpts.unshift({
+        $match: {
+          open: isActive,
+          clientID,
+          createdAt: {
+            $gte: new Date(initialDate),
+            $lte: new Date(completeFinalDate),
+          },
+        },
+      });
+    }
+
   } catch (err) {
     return res.status(400).json({ err: 'failed to generate statistics' });
   }
