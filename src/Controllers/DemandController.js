@@ -502,6 +502,10 @@ const demandsSectorsStatistic = async (req, res) => {
       });
     }
 
+    // Execute the aggregation pipeline and retrieve the statistics
+    const statistics = await Demand.aggregate(aggregatorOpts).exec();
+    console.log(statistics);
+    return res.json(statistics);
   } catch (err) {
     return res.status(400).json({ err: 'failed to generate statistics' });
   }
